@@ -9,7 +9,7 @@ from sklearn.preprocessing import OrdinalEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
 
-file_path = "D:/centennial/centennial 2024 summer/comp247/Assignment/Group Project/group_project/Killed_and_Seriously_Injured.csv"
+file_path = "C:/Users/Eric/Desktop/centennial 2024 summer/comp247/Assignment/Group Project/group_project/Killed_and_Seriously_Injured.csv"
 
 def load_and_preprocess_data(file_path):
 

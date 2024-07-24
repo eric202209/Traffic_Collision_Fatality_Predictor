@@ -72,7 +72,8 @@ def evaluate_models(X_train, X_test, X_train_scaled, X_test_scaled, y_train, y_t
         "Decision Tree": DecisionTreeClassifier(random_state=42, class_weight='balanced'),
         "Support Vector Machine": SVC(random_state=42, class_weight='balanced'),
         "Random Forest": RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced'),
-        "Neural Network": MLPClassifier(hidden_layer_sizes=(100, 50), max_iter=1000, random_state=42)
+        # "Neural Network": MLPClassifier(hidden_layer_sizes=(100, 50), max_iter=1000, random_state=42)
+        "Neural Network": MLPClassifier(hidden_layer_sizes=(50, 25), max_iter=1000, learning_rate_init=0.001, early_stopping=True, tol=1e-3, random_state=42)
     }
 
     for name, model in models.items():
