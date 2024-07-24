@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Collision Fatality Predictor</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+        form { max-width: 500px; margin: 0 auto; }
+        label { display: block; margin-top: 10px; }
+        input, select { width: 100%; padding: 5px; margin-top: 5px; }
+        button { display: block; width: 100%; padding: 10px; margin-top: 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        #result { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Traffic Collision Fatality Predictor</h1>
+    <form id="predictionForm">
+        <label for="ROAD_CLASS">Road Class:</label>
+        <select id="ROAD_CLASS" required>
+            <option value="">Select...</option>
+            <option value="0">Major Arterial</option>
+            <option value="1">Minor Arterial</option>
+            <option value="2">Collector</option>
+            <option value="3">Local</option>
+        </select>
+
+        <label for="VISIBILITY">Visibility:</label>
+        <select id="VISIBILITY" required>
+            <option value="">Select...</option>
+            <option value="0">Clear</option>
+            <option value="1">Rain</option>
+            <option value="2">Snow</option>
+            <option value="3">Strong wind</option>
+            <option value="4">Fog, Mist, Smoke, Dust</option>
+            <option value="5">Drifting Snow</option>
+            <option value="6">Freezing Rain</option>
+        </select>
+
+        <label for="LIGHT">Light Condition:</label>
+        <select id="LIGHT" required>
+            <option value="">Select...</option>
+            <option value="0">Daylight</option>
+            <option value="1">Dark</option>
+            <option value="2">Dark, artificial</option>
+        </select>
+
+        <label for="PEDESTRIAN">Pedestrian Involved:</label>
+        <select id="PEDESTRIAN" required>
+            <option value="">Select...</option>
+            <option value="0"></option>
+            <option value="1">Yes</option>
+        </select>
+    
+        <label for="DISTRICT">District:</label>
+        <select id="DISTRICT" required>
+            <option value="">Select...</option>
+            <option value="0">Toronto and East York</option>
+            <option value="1">North York</option>
+            <option value="2">Scarborough</option>
+            <option value="3">Etobicoke York</option>
+        </select>
+
+        <label for="ACCLOC">Accident Location:</label>
+        <select id="ACCLOC" required>
+            <option value="">Select...</option>
+            <option value="0">Intersection Related</option>
+            <option value="1">Non Intersection</option>
+            <option value="2">At Intersection</option>
+            <option value="3">At/Near Private Drive</option>
+            <option value="4">Underpass or Tunnel</option>
+        </select>
+    
+        <label for="TRAFFCTL">Traffic Control:</label>
+        <select id="TRAFFCTL" required>
+            <option value="">Select...</option>
+            <option value="0">Traffic Signal</option>
+            <option value="1">Stop Sign</option>
+            <option value="2">Streetcar (Stop for)</option>
+            <option value="3">No Control</option>
+            <option value="4">Pedestrian Crossover</option>
+        </select>
+    
+        <label for="RDSFCOND">Road Surface Condition:</label>
+        <select id="RDSFCOND" required>
+            <option value="">Select...</option>
+            <option value="0">Dry</option>
+            <option value="1">Wet</option>
+            <option value="2">Slush</option>
+            <option value="3">Ice</option>
+            <option value="4">Other</option>
+            <option value="5">Loose Snow</option>
+            <option value="6">Packed Snow</option>
+        </select>
+
+        <!-- Add more fields for other features -->
+
+        <button type="submit">Predict</button>
+    </form>
+    <div id="result"></div>
+
+    <div id="confusion-matrices" style="display: none;">
+        <h2>Confusion Matrices</h2>
+        <img src="/static/images/confusion_matrix_logistic_regression.png" alt="Logistic Regression Confusion Matrix">
+        <img src="/static/images/confusion_matrix_decision_tree.png" alt="Decision Tree Confusion Matrix">
+        <img src="/static/images/confusion_matrix_support_vector_machine.png" alt="SVM Confusion Matrix">
+        <img src="/static/images/confusion_matrix_random_forest.png" alt="Random Forest Confusion Matrix">
+        <img src="/static/images/confusion_matrix_neural_network.png" alt="Neural Network Confusion Matrix">
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Collect form data
+            const formData = {
+                ROAD_CLASS: document.getElementById('ROAD_CLASS').value,
+                DISTRICT: document.getElementById('DISTRICT').value,
+                ACCLOC: document.getElementById('ACCLOC').value,
+                TRAFFCTL: document.getElementById('TRAFFCTL').value,
+                VISIBILITY: document.getElementById('VISIBILITY').value,
+                LIGHT: document.getElementById('LIGHT').value,
+                RDSFCOND: document.getElementById('RDSFCOND').value,
+                PEDESTRIAN: document.getElementById('PEDESTRIAN').value,
+                // Add other fields here
+                
+                // Set default values for other required fields
+                IMPACTYPE: "0",
+                CYCLISTcounter: "0",
+                AUTOMOBILEcounter: "1",
+                MOTORCYCLEcounter: "0",
+                TRUCKcounter: "0",
+                TRSN_CITY_VEHcounter: "0",
+                EMERG_VEHcounter: "0",
+                PASSENGERcounter: "0",
+                SPEEDINGcounter: "0",
+                AG_DRIVcounter: "0",
+                REDLIGHTcounter: "0",
+                ALCOHOLcounter: "0",
+                DISABILITYcounter: "0"
+            };
+
+            // Send data to Flask API
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const prediction = data.prediction === 1 ? 'Fatal' : 'Non-Fatal';
+                document.getElementById('result').textContent = `Prediction: ${prediction}`;
+                //document.getElementById('confusion-matrices').style.display = 'block';
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                document.getElementById('result').textContent = 'An error occurred while making the prediction.';
+            });
+        });
+    </script>
+</body>
+</html>
