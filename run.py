@@ -6,7 +6,7 @@ import os
 def main():
     try:
         # Load and preprocess data
-        file_path = 'C:/Users/Eric/Desktop/centennial 2024 summer/comp247/Assignment/Group Project/group_project/Killed_and_Seriously_Injured.csv'
+        file_path = 'D:/centennial/centennial 2024 summer/comp247/Assignment/Group Project/Traffic_Collision_Fatality_Predictor/Killed_and_Seriously_Injured.csv'
         X_train, X_test, X_train_scaled, X_test_scaled, y_train, y_test, scaler, feature_names = load_and_preprocess_data(file_path)        # Evaluate models and get the best one
         
         # Evaluate models and get the best one

@@ -32,7 +32,8 @@ def predict():
     try:
         # Parse incoming JSON data
         data = request.get_json(force=True)
-        
+        app.logger.info(f"Received data: {data}")
+
         if not data:
             return jsonify({'error': 'No data provided'}), 400
         
@@ -48,19 +49,33 @@ def predict():
             return jsonify({'error': f'Missing features: {", ".join(missing_features)}'}), 400
         
         # Extract features in the correct order
-        features = [float(data[feature]) for feature in feature_names]
+        try:
+            features = []
+            for feature in feature_names:
+                value = data.get(feature)
+                if value is None:
+                    return jsonify({'error': f'Missing value for feature: {feature}'}), 400
+                try:
+                    features.append(float(value))
+                except ValueError:
+                    return jsonify({'error': f'Invalid value for feature {feature}: {value}'}), 400
+
         
-        features_array = np.array(features).reshape(1, -1)
-        scaled_features = scaler.transform(features_array)
-        prediction = model.predict(scaled_features)
+            app.logger.info(f"Extracted features: {features}")
+
+            features_array = np.array(features).reshape(1, -1)
+            scaled_features = scaler.transform(features_array)
+            prediction = model.predict(scaled_features)
         
-        return jsonify({'prediction': int(prediction[0])})
+            return jsonify({'prediction': int(prediction[0])})
+        
+        except Exception as e:
+            app.logger.error(f"Error in feature processing: {str(e)}")
+            return jsonify({'error': f'Error in feature processing: {str(e)}'}), 400
     
-    except ValueError as ve:
-        return jsonify({'error': f'Invalid value for a feature: {str(ve)}'}), 400
     except Exception as e:
         app.logger.error(f"Error in prediction: {str(e)}")
-        return jsonify({'error': 'An unexpected error occurred during prediction'}), 500
+        return jsonify({'error': f'An unexpected error occurred during prediction: {str(e)}'}), 500
 
 
 @app.route('/static/images/<path:filename>')
