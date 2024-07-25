@@ -1,5 +1,7 @@
-pandas
-numpy
-scikit-learn
-matplotlib
-flask
+pandas=2.2.2
+numpy==2.0.1
+scikit-learn==1.5.1
+matplotlib==3.9.1
+flask==3.0.3
+Flask-Limiter>=3.3.0
+pyyaml==6.0.1

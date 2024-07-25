@@ -8,11 +8,14 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
+from utils.logger import setup_logger
 
-file_path = "D:/centennial/centennial 2024 summer/comp247/Assignment/Group Project/Traffic_Collision_Fatality_Predictor/Killed_and_Seriously_Injured.csv"
+logger = setup_logger()
+pd.set_option('future.no_silent_downcasting', True)
 
-def load_and_preprocess_data(file_path):
+def load_and_preprocess_data(file_path, logger):
 
+    logger.info(f"Loading data from {file_path}")
     # Import data and brief data exploration to understand what we are dealing with
     df = pd.read_csv(file_path)
     pd.set_option('display.max_columns', None)
@@ -143,7 +146,7 @@ def load_and_preprocess_data(file_path):
     df_incidents['ACCLASS'].unique()
     df_incidents = df_incidents.dropna(subset=['ACCLASS']) # delete any row where the TARGET variable is null
     acclass_mapping = {'Fatal': 1, 'Non-Fatal Injury': 0, 'Property Damage O': 0}
-    df_incidents['ACCLASS'] = df_incidents['ACCLASS'].replace(acclass_mapping)
+    df_incidents['ACCLASS'] = df_incidents['ACCLASS'].replace(acclass_mapping).astype(int)
 
 
     df_majority = df_incidents[df_incidents['ACCLASS'] == 0]
@@ -224,6 +227,7 @@ def load_and_preprocess_data(file_path):
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
+    logger.info("Data preprocessing completed")
     #return X_train_scaled, X_test_scaled, y_train, y_test, scaler
     return X_train, X_test, X_train_scaled, X_test_scaled, y_train, y_test, scaler, X.columns
 

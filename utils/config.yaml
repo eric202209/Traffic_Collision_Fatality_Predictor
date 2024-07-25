@@ -1,0 +1,6 @@
+data_path: '../Traffic_Collision_Fatality_Predictor/Killed_and_Seriously_Injured.csv'
+model_path: 'models/best_model.pkl'
+scaler_path: 'models/scaler.pkl'
+feature_names_path: 'models/feature_names.pkl'
+debug: True
+port: 5000
