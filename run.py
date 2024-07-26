@@ -28,6 +28,18 @@ def main():
         save_pickle(feature_names, config['feature_names_path'])
 
         # Verify files were created and are not empty
+        files_to_check = [
+            config['model_path'],
+            config['scaler_path'],
+            config['feature_names_path'],
+            'models/best_model_shap_values.pkl'
+        ]
+        if all(os.path.exists(path) and os.path.getsize(path) > 0 for path in files_to_check):
+            logger.info("Model, scaler, feature names, and SHAP values saved successfully.")
+        else:
+            logger.error("Error: One or more saved files are missing or empty.")
+
+        # Verify files were created and are not empty
         if all(os.path.getsize(path) > 0 for path in [config['model_path'], config['scaler_path'], config['feature_names_path']]):
             logger.info("Model, scaler, and feature names saved successfully.")
         else:

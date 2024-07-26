@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traffic Collision Fatality Predictor</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+        h1, h2, #result {text-align: center;}
         form { max-width: 500px; margin: 0 auto; }
         label { display: block; margin-top: 10px; }
         input, select { width: 100%; padding: 5px; margin-top: 5px; }
         button { display: block; width: 100%; padding: 10px; margin-top: 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
         #result { margin-top: 20px; font-weight: bold; }
+        #map { height: 400px; width: 100%; margin-top: 20px; }
+        .chart-container { height: 300px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -45,8 +51,8 @@
             <option value="2">Dark, artificial</option>
         </select>
 
-        <label for="PEDESTRIAN">Pedestrian Involved:</label>
-        <select id="PEDESTRIAN" required>
+        <label for="PEDESTRIANcounter">Pedestrian Involved:</label>
+        <select id="PEDESTRIANcounter" required>
             <option value="">Select...</option>
             <option value="0"></option>
             <option value="1">Yes</option>
@@ -92,13 +98,25 @@
             <option value="5">Loose Snow</option>
             <option value="6">Packed Snow</option>
         </select>
-
         <!-- Add more fields for other features -->
-
+        
         <button type="submit">Predict</button>
     </form>
+    </br>
     <div id="result"></div>
-
+    <h2>Toronto Traffic Collision Map</h2>
+    <div id="map"></div>
+    </br>
+    <div class="chart-container">
+        <h2>Model Performance Metrics</h2>
+        <canvas id="metricsChart"></canvas>
+    </div>
+    </br>
+    </br>
+    <div class="chart-container">
+        <h2>Feature Importance in Collision Prediction</h2>
+        <canvas id="featureImportanceChart"></canvas>
+    </div>
     <div id="confusion-matrices" style="display: none;">
         <h2>Confusion Matrices</h2>
         <img src="/static/images/confusion_matrix_logistic_regression.png" alt="Logistic Regression Confusion Matrix">
@@ -109,6 +127,9 @@
     </div>
 
     <script>
+        let map = L.map('map').setView([43.7, -79.3], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
         document.getElementById('predictionForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -121,9 +142,9 @@
                 VISIBILITY: document.getElementById('VISIBILITY').value,
                 LIGHT: document.getElementById('LIGHT').value,
                 RDSFCOND: document.getElementById('RDSFCOND').value,
-                PEDESTRIAN: document.getElementById('PEDESTRIAN').value,
+                PEDESTRIANcounter: document.getElementById('PEDESTRIANcounter').value,
                 // Add other fields here
-                
+    
                 // Set default values for other required fields
                 IMPACTYPE: "0",
                 CYCLISTcounter: "0",
@@ -140,25 +161,100 @@
                 DISABILITYcounter: "0"
             };
 
-            // Send data to Flask API
             fetch('/predict', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
             })
             .then(response => response.json())
             .then(data => {
                 const prediction = data.prediction === 1 ? 'Fatal' : 'Non-Fatal';
-                document.getElementById('result').textContent = `Prediction: ${prediction}`;
-                //document.getElementById('confusion-matrices').style.display = 'block';
+                const probability = (data.probability * 100).toFixed(2);
+                document.getElementById('result').textContent = `Prediction: ${prediction} (Probability: ${probability}%)`;
+                loadFatalities();
+                loadModelMetrics();
+                loadFeatureImportance();
             })
             .catch((error) => {
                 console.error('Error:', error);
                 document.getElementById('result').textContent = 'An error occurred while making the prediction.';
             });
         });
+
+        function loadFatalities() {
+            fetch('/get_fatalities')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(point => {
+                        L.circle([point.LATITUDE, point.LONGITUDE], {
+                            color: 'red',
+                            fillColor: '#f03',
+                            fillOpacity: 0.5,
+                            radius: 100
+                        }).addTo(map);
+                    });
+                });
+        }
+
+        function loadModelMetrics() {
+            fetch('/model_metrics')
+                .then(response => response.json())
+                .then(data => {
+                    new Chart(document.getElementById('metricsChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(data),
+                            datasets: [{
+                                label: 'Model Metrics',
+                                data: Object.values(data),
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 1
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
+        function loadFeatureImportance() {
+            fetch('/feature_importance')
+                .then(response => response.json())
+                .then(data => {
+                    new Chart(document.getElementById('featureImportanceChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: data.map(item => item.feature),
+                            datasets: [{
+                                label: 'Feature Importance',
+                                data: data.map(item => item.importance),
+                                backgroundColor: 'rgba(153, 102, 255, 0.6)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
+        // Load initial data
+        loadFatalities();
+        loadModelMetrics();
+        loadFeatureImportance();
     </script>
 </body>
 </html>
