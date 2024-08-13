@@ -6,6 +6,7 @@ from utils.config import load_config
 from utils import setup_logger
 import pandas as pd
 import traceback
+from ml_pipeline.model_evaluation import evaluate_models
 
 def save_pickle(obj, path):
     # Ensure directory exists
@@ -25,11 +26,12 @@ def main():
 
         # Log the shape of the data and the first few feature names
         logger.info(f"X_train shape: {X_train.shape}")
+        logger.info(f"X_train_scaled shape: {X_train_scaled.shape}")
         logger.info(f"y_train shape: {y_train.shape}")
         logger.info(f"First few feature names: {feature_names[:5]}")
 
         # Evaluate models and get the best one
-        best_model = evaluate_models(X_train, X_test, X_train_scaled, X_test_scaled, y_train, y_test, logger)
+        best_model, scaler = evaluate_models(X_train_scaled, X_test_scaled, y_train, y_test, logger)       
         
         # Save model, scaler, and feature names
         save_pickle(best_model, config['model_path'])

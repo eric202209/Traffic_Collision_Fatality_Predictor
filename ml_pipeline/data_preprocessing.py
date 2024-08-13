@@ -140,10 +140,6 @@ def load_and_preprocess_data(file_path, logger):
     # Count 'Yes' for each category
     for category in categories:
         counts = [values.count('Yes') for values in df_incidents[category]]
-        # counts = []
-        # for values in df_incidents[category]:
-        #     count_yes = values.count('Yes')
-        #     counts.append(count_yes)
         df_incidents[category + 'counter'] = counts
 
     # df_incidents.to_csv('C:/Users/aegno/OneDrive - Centennial College/Classes/IV semester/Supervised Learning - comp247/project/incidents_df2.csv', index=False)
@@ -279,4 +275,3 @@ def load_and_preprocess_data(file_path, logger):
     logger.info("Data preprocessing completed")
     #return X_train_scaled, X_test_scaled, y_train, y_test, scaler
     return X_train, X_test, X_train_scaled, X_test_scaled, y_train, y_test, scaler, X.columns
-
