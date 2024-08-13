@@ -134,8 +134,46 @@
                 <option value="5">Loose Snow</option>
                 <option value="6">Packed Snow</option>
             </select>
-            <!-- Add more fields for other features -->
+
+            <label for="IMPACTYPE">Impact Type:</label>
+            <select id="IMPACTYPE" required>
+                <option value="">Select...</option>
+                <option value="0">Angle</option>
+                <option value="1">Approaching</option>
+                <option value="2">Cyclist Collisions</option>
+                <option value="3">Pedestrian Collisions</option>
+                <option value="4">Rear End</option>
+                <option value="5">Sideswipe</option>
+                <option value="6">SMV Other</option>
+                <option value="7">SMV Unattended Vehicle</option>
+                <option value="8">Turning Movement</option>
+                <option value="9">Injury</option>
+                <option value="10">Other</option>
+                <option value="11"></option>
+            </select>
+
+            <label for="SPEEDINGcounter">Speeding Involved:</label>
+            <select id="SPEEDINGcounter" required>
+                <option value="">Select...</option>
+                <option value="0"></option>
+                <option value="1">Yes</option>
+            </select>
+
+            <label for="REDLIGHTcounter">Red Light Running:</label>
+            <select id="REDLIGHTcounter" required>
+                <option value="">Select...</option>
+                <option value="0"></option>
+                <option value="1">Yes</option>
+            </select>
             
+            <label for="AG_DRIVcounter">Aggressive Driving:</label>
+                <select id="AG_DRIVcounter" required>
+                <option value="">Select...</option>
+                <option value="0"></option>
+                <option value="1">Yes</option>
+            </select>   
+            <!-- Add more fields for other features -->
+            </br>
             <button type="submit">Predict</button>
         </form>
         </br>
