@@ -9,6 +9,8 @@ from sklearn.preprocessing import OrdinalEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
 from utils.logger import setup_logger
+import pickle
+import os
 
 logger = setup_logger()
 pd.set_option('future.no_silent_downcasting', True)
@@ -16,10 +18,42 @@ pd.set_option('future.no_silent_downcasting', True)
 def load_and_preprocess_data(file_path, logger):
 
     logger.info(f"Loading data from {file_path}")
-    # Import data and brief data exploration to understand what we are dealing with
-    df = pd.read_csv(file_path)
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.max_rows', None)
+    try:
+        # Check if file exists
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"The file {file_path} does not exist.")
+        
+        # Check if file exists and read the first few lines
+        with open(file_path, 'r') as f:
+            first_lines = [next(f) for _ in range(5)]
+        logger.info(f"First few lines of the file:\n{''.join(first_lines)}")
+
+        # Check file size
+        file_size = os.path.getsize(file_path)
+        logger.info(f"File size: {file_size} bytes")
+        
+        if file_size == 0:
+            raise ValueError(f"The file {file_path} is empty.")
+        
+        # Import data
+        logger.info("Reading CSV file...")
+        df = pd.read_csv(file_path)
+        logger.info(f"CSV file read successfully. Shape: {df.shape}")
+
+        # Import data and brief data exploration to understand what we are dealing with
+        df = pd.read_csv(file_path)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.max_rows', None)
+
+    except pd.errors.EmptyDataError:
+        logger.error(f"The file {file_path} is empty or contains no data.")
+        raise
+    except pd.errors.ParserError as e:
+        logger.error(f"Error parsing the CSV file: {str(e)}")
+        raise
+    except Exception as e:
+        logger.error(f"Error in load_and_preprocess_data: {str(e)}")
+        raise
 
     '''
     data exploration
@@ -209,6 +243,21 @@ def load_and_preprocess_data(file_path, logger):
     # Create a new DataFrame with the transformed data and column names
     X = pd.DataFrame(X_transformed, columns=all_column_names)
 
+    # After preprocessing and before splitting the data
+    feature_names = X.columns.tolist()
+
+    # Save feature names
+    with open('models/feature_names.pkl', 'wb') as f:
+        pickle.dump(feature_names, f)
+        
+    # Verify that feature names were saved correctly
+    try:
+        with open('models/feature_names.pkl', 'rb') as f:
+            loaded_feature_names = pickle.load(f)
+        print("Loaded feature names:", loaded_feature_names)
+    except Exception as e:
+        print(f"Error loading feature names: {e}")
+    
     '''
     Splitting Data
     '''

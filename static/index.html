@@ -7,123 +7,201 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
         h1, h2, #result {text-align: center;}
         form { max-width: 500px; margin: 0 auto; }
         label { display: block; margin-top: 10px; }
         input, select { width: 100%; padding: 5px; margin-top: 5px; }
-        button { display: block; width: 100%; padding: 10px; margin-top: 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
         #result { margin-top: 20px; font-weight: bold; }
         #map { height: 400px; width: 100%; margin-top: 20px; }
         .chart-container { height: 300px; margin-top: 20px; }
+        .section {
+            margin-bottom: 30px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
-    <h1>Traffic Collision Fatality Predictor</h1>
-    <form id="predictionForm">
-        <label for="ROAD_CLASS">Road Class:</label>
-        <select id="ROAD_CLASS" required>
-            <option value="">Select...</option>
-            <option value="0">Major Arterial</option>
-            <option value="1">Minor Arterial</option>
-            <option value="2">Collector</option>
-            <option value="3">Local</option>
-        </select>
+    <div class="container">
+        <h1>Traffic Collision Fatality Predictor</h1>
 
-        <label for="VISIBILITY">Visibility:</label>
-        <select id="VISIBILITY" required>
-            <option value="">Select...</option>
-            <option value="0">Clear</option>
-            <option value="1">Rain</option>
-            <option value="2">Snow</option>
-            <option value="3">Strong wind</option>
-            <option value="4">Fog, Mist, Smoke, Dust</option>
-            <option value="5">Drifting Snow</option>
-            <option value="6">Freezing Rain</option>
-        </select>
+        <form id="predictionForm">
+            <label for="ROAD_CLASS">Road Class:</label>
+            <select id="ROAD_CLASS" required>
+                <option value="">Select...</option>
+                <option value="0">Major Arterial</option>
+                <option value="1">Minor Arterial</option>
+                <option value="2">Collector</option>
+                <option value="3">Local</option>
+            </select>
 
-        <label for="LIGHT">Light Condition:</label>
-        <select id="LIGHT" required>
-            <option value="">Select...</option>
-            <option value="0">Daylight</option>
-            <option value="1">Dark</option>
-            <option value="2">Dark, artificial</option>
-        </select>
+            <label for="VISIBILITY">Visibility:</label>
+            <select id="VISIBILITY" required>
+                <option value="">Select...</option>
+                <option value="0">Clear</option>
+                <option value="1">Rain</option>
+                <option value="2">Snow</option>
+                <option value="3">Strong wind</option>
+                <option value="4">Fog, Mist, Smoke, Dust</option>
+                <option value="5">Drifting Snow</option>
+                <option value="6">Freezing Rain</option>
+            </select>
 
-        <label for="PEDESTRIANcounter">Pedestrian Involved:</label>
-        <select id="PEDESTRIANcounter" required>
-            <option value="">Select...</option>
-            <option value="0"></option>
-            <option value="1">Yes</option>
-        </select>
-    
-        <label for="DISTRICT">District:</label>
-        <select id="DISTRICT" required>
-            <option value="">Select...</option>
-            <option value="0">Toronto and East York</option>
-            <option value="1">North York</option>
-            <option value="2">Scarborough</option>
-            <option value="3">Etobicoke York</option>
-        </select>
+            <label for="LIGHT">Light Condition:</label>
+            <select id="LIGHT" required>
+                <option value="">Select...</option>
+                <option value="0">Daylight</option>
+                <option value="1">Dark</option>
+                <option value="2">Dark, artificial</option>
+            </select>
 
-        <label for="ACCLOC">Accident Location:</label>
-        <select id="ACCLOC" required>
-            <option value="">Select...</option>
-            <option value="0">Intersection Related</option>
-            <option value="1">Non Intersection</option>
-            <option value="2">At Intersection</option>
-            <option value="3">At/Near Private Drive</option>
-            <option value="4">Underpass or Tunnel</option>
-        </select>
-    
-        <label for="TRAFFCTL">Traffic Control:</label>
-        <select id="TRAFFCTL" required>
-            <option value="">Select...</option>
-            <option value="0">Traffic Signal</option>
-            <option value="1">Stop Sign</option>
-            <option value="2">Streetcar (Stop for)</option>
-            <option value="3">No Control</option>
-            <option value="4">Pedestrian Crossover</option>
-        </select>
-    
-        <label for="RDSFCOND">Road Surface Condition:</label>
-        <select id="RDSFCOND" required>
-            <option value="">Select...</option>
-            <option value="0">Dry</option>
-            <option value="1">Wet</option>
-            <option value="2">Slush</option>
-            <option value="3">Ice</option>
-            <option value="4">Other</option>
-            <option value="5">Loose Snow</option>
-            <option value="6">Packed Snow</option>
-        </select>
-        <!-- Add more fields for other features -->
+            <label for="PEDESTRIANcounter">Pedestrian Involved:</label>
+            <select id="PEDESTRIANcounter" required>
+                <option value="">Select...</option>
+                <option value="0"></option>
+                <option value="1">Yes</option>
+            </select>
         
-        <button type="submit">Predict</button>
-    </form>
-    </br>
-    <div id="result"></div>
-    <h2>Toronto Traffic Collision Map</h2>
-    <div id="map"></div>
-    </br>
-    <div class="chart-container">
-        <h2>Model Performance Metrics</h2>
-        <canvas id="metricsChart"></canvas>
-    </div>
-    </br>
-    </br>
-    <div class="chart-container">
-        <h2>Feature Importance in Collision Prediction</h2>
-        <canvas id="featureImportanceChart"></canvas>
-    </div>
-    <div id="confusion-matrices" style="display: none;">
-        <h2>Confusion Matrices</h2>
-        <img src="/static/images/confusion_matrix_logistic_regression.png" alt="Logistic Regression Confusion Matrix">
-        <img src="/static/images/confusion_matrix_decision_tree.png" alt="Decision Tree Confusion Matrix">
-        <img src="/static/images/confusion_matrix_support_vector_machine.png" alt="SVM Confusion Matrix">
-        <img src="/static/images/confusion_matrix_random_forest.png" alt="Random Forest Confusion Matrix">
-        <img src="/static/images/confusion_matrix_neural_network.png" alt="Neural Network Confusion Matrix">
+            <label for="DISTRICT">District:</label>
+            <select id="DISTRICT" required>
+                <option value="">Select...</option>
+                <option value="0">Toronto and East York</option>
+                <option value="1">North York</option>
+                <option value="2">Scarborough</option>
+                <option value="3">Etobicoke York</option>
+            </select>
+
+            <label for="ACCLOC">Accident Location:</label>
+            <select id="ACCLOC" required>
+                <option value="">Select...</option>
+                <option value="0">Intersection Related</option>
+                <option value="1">Non Intersection</option>
+                <option value="2">At Intersection</option>
+                <option value="3">At/Near Private Drive</option>
+                <option value="4">Underpass or Tunnel</option>
+            </select>
+        
+            <label for="TRAFFCTL">Traffic Control:</label>
+            <select id="TRAFFCTL" required>
+                <option value="">Select...</option>
+                <option value="0">Traffic Signal</option>
+                <option value="1">Stop Sign</option>
+                <option value="2">Streetcar (Stop for)</option>
+                <option value="3">No Control</option>
+                <option value="4">Pedestrian Crossover</option>
+            </select>
+        
+            <label for="RDSFCOND">Road Surface Condition:</label>
+            <select id="RDSFCOND" required>
+                <option value="">Select...</option>
+                <option value="0">Dry</option>
+                <option value="1">Wet</option>
+                <option value="2">Slush</option>
+                <option value="3">Ice</option>
+                <option value="4">Other</option>
+                <option value="5">Loose Snow</option>
+                <option value="6">Packed Snow</option>
+            </select>
+            <!-- Add more fields for other features -->
+            
+            <button type="submit">Predict</button>
+        </form>
+        </br>
+        <div id="result"></div>
+        <h2>Toronto Traffic Collision Map</h2>
+        <div id="map"></div>
+        </br>
+        <div class="chart-container">
+            <h2>Model Performance Metrics</h2>
+            <canvas id="metricsChart"></canvas>
+        </div>
+        </br>
+        </br>
+        <div class="section">
+            <h2>Feature Importance in Collision Prediction</h2>
+            <canvas id="feature-importance-chart"></canvas>
+        </div>
+        <div id="confusion-matrices" style="display: none;">
+            <h2>Confusion Matrices</h2>
+            <img src="/static/images/confusion_matrix_logistic_regression.png" alt="Logistic Regression Confusion Matrix">
+            <img src="/static/images/confusion_matrix_decision_tree.png" alt="Decision Tree Confusion Matrix">
+            <img src="/static/images/confusion_matrix_support_vector_machine.png" alt="SVM Confusion Matrix">
+            <img src="/static/images/confusion_matrix_random_forest.png" alt="Random Forest Confusion Matrix">
+            <img src="/static/images/confusion_matrix_neural_network.png" alt="Neural Network Confusion Matrix">
+        </div>
+
+        <div class="section">
+            <h2>Time-based Analysis</h2>
+            <canvas id="hourly-chart"></canvas>
+            <canvas id="daily-chart"></canvas>
+            <canvas id="monthly-chart"></canvas>
+          </div>
+        
+          <div class="section">
+            <h2>Bulk Prediction</h2>
+            <textarea id="bulk-input" rows="10" cols="50" placeholder='Enter JSON data for bulk prediction. Example:
+        [
+          {
+            "ROAD_CLASS": 0,
+            "VISIBILITY": 0,
+            "LIGHT": 0,
+            "PEDESTRIANcounter": 0,
+            "DISTRICT": 0,
+            "ACCLOC": 0,
+            "TRAFFCTL": 0,
+            "RDSFCOND": 0
+          },
+          {
+            "ROAD_CLASS": 1,
+            "VISIBILITY": 1,
+            "LIGHT": 1,
+            "PEDESTRIANcounter": 1,
+            "DISTRICT": 1,
+            "ACCLOC": 1,
+            "TRAFFCTL": 1,
+            "RDSFCOND": 1
+          }
+        ]'></textarea>
+            <button id="predict-button" onclick="bulkPredict()">Predict</button>
+            <div id="bulk-results"></div>
+        </div>
+        
+        <div class="section">
+            <h2>SHAP Summary</h2>
+            <div id="shap-plot"></div>
+        </div>
     </div>
 
     <script>
@@ -132,33 +210,16 @@
 
         document.getElementById('predictionForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            // Collect form data
+                            
             const formData = {
                 ROAD_CLASS: document.getElementById('ROAD_CLASS').value,
+                VISIBILITY: document.getElementById('VISIBILITY').value,
+                LIGHT: document.getElementById('LIGHT').value,
+                PEDESTRIANcounter: document.getElementById('PEDESTRIANcounter').value,
                 DISTRICT: document.getElementById('DISTRICT').value,
                 ACCLOC: document.getElementById('ACCLOC').value,
                 TRAFFCTL: document.getElementById('TRAFFCTL').value,
-                VISIBILITY: document.getElementById('VISIBILITY').value,
-                LIGHT: document.getElementById('LIGHT').value,
-                RDSFCOND: document.getElementById('RDSFCOND').value,
-                PEDESTRIANcounter: document.getElementById('PEDESTRIANcounter').value,
-                // Add other fields here
-    
-                // Set default values for other required fields
-                IMPACTYPE: "0",
-                CYCLISTcounter: "0",
-                AUTOMOBILEcounter: "1",
-                MOTORCYCLEcounter: "0",
-                TRUCKcounter: "0",
-                TRSN_CITY_VEHcounter: "0",
-                EMERG_VEHcounter: "0",
-                PASSENGERcounter: "0",
-                SPEEDINGcounter: "0",
-                AG_DRIVcounter: "0",
-                REDLIGHTcounter: "0",
-                ALCOHOLcounter: "0",
-                DISABILITYcounter: "0"
+                RDSFCOND: document.getElementById('RDSFCOND').value
             };
 
             fetch('/predict', {
@@ -171,9 +232,6 @@
                 const prediction = data.prediction === 1 ? 'Fatal' : 'Non-Fatal';
                 const probability = (data.probability * 100).toFixed(2);
                 document.getElementById('result').textContent = `Prediction: ${prediction} (Probability: ${probability}%)`;
-                loadFatalities();
-                loadModelMetrics();
-                loadFeatureImportance();
             })
             .catch((error) => {
                 console.error('Error:', error);
@@ -228,19 +286,91 @@
             fetch('/feature_importance')
                 .then(response => response.json())
                 .then(data => {
-                    new Chart(document.getElementById('featureImportanceChart'), {
+                const chart = new Chart(document.getElementById('feature-importance-chart'), {
+                    type: 'bar',
+                    data: {
+                    labels: data.map(d => d.feature),
+                    datasets: [{
+                        label: 'Feature Importance',
+                        data: data.map(d => d.importance),
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                    }]
+                    },
+                    options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                        beginAtZero: true
+                        }
+                    }
+                    }
+                });
+            });
+        }
+
+        function loadTimeAnalysis() {
+            fetch('/time_analysis')
+                .then(response => response.json())
+                .then(data => {
+                    const hourlyData = data.hourly;
+                    const dailyData = data.daily;
+                    const monthlyData = data.monthly;
+
+                    // Create hourly chart
+                    new Chart(document.getElementById('hourly-chart'), {
                         type: 'bar',
                         data: {
-                            labels: data.map(item => item.feature),
+                            labels: hourlyData.map(d => d.Hour),
                             datasets: [{
-                                label: 'Feature Importance',
-                                data: data.map(item => item.importance),
+                                label: 'Collisions by Hour',
+                                data: hourlyData.map(d => d.ACCLASS),
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+
+                    // Create daily chart
+                    new Chart(document.getElementById('daily-chart'), {
+                        type: 'bar',
+                        data: {
+                            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                            datasets: [{
+                                label: 'Collisions by Day of Week',
+                                data: dailyData.map(d => d.ACCLASS),
                                 backgroundColor: 'rgba(153, 102, 255, 0.6)'
                             }]
                         },
                         options: {
                             responsive: true,
-                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+
+                    // Create monthly chart
+                    new Chart(document.getElementById('monthly-chart'), {
+                        type: 'bar',
+                        data: {
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                            datasets: [{
+                                label: 'Collisions by Month',
+                                data: monthlyData.map(d => d.ACCLASS),
+                                backgroundColor: 'rgba(255, 159, 64, 0.6)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
                             scales: {
                                 y: {
                                     beginAtZero: true
@@ -251,10 +381,53 @@
                 });
         }
 
-        // Load initial data
-        loadFatalities();
-        loadModelMetrics();
-        loadFeatureImportance();
+        function bulkPredict() {
+            const bulkInput = document.getElementById('bulk-input').value;
+            let scenarios;
+            try {
+                scenarios = JSON.parse(bulkInput);
+            } catch (error) {
+                alert('Invalid JSON input. Please check your data format.');
+                return;
+            }
+            
+            fetch('/bulk_predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(scenarios),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Bulk prediction results:", data);  // Add this line
+                document.getElementById('bulk-results').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during prediction. Please try again.');
+            });
+        }
+
+        function loadShapSummary() {
+            fetch('/shap_summary')
+                .then(response => response.json())
+                .then(data => {
+                    console.log("SHAP data received:", data);  // Log the received data
+                    Plotly.newPlot('shap-plot', data);
+                })
+                .catch(error => {
+                    console.error("Error loading SHAP summary:", error);
+                    document.getElementById('shap-plot').innerHTML = 'Error loading SHAP summary';
+                });
+        }
+
+        // Call these functions when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFatalities();
+            loadModelMetrics();
+            loadFeatureImportance();
+            loadTimeAnalysis();
+            loadShapSummary();
+        });
     </script>
 </body>
 </html>
