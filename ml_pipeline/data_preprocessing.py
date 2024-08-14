@@ -236,6 +236,9 @@ def load_and_preprocess_data(file_path, logger):
 
     all_column_names = categorical_feature_names.tolist() + numerical_feature_names
 
+    if len(all_column_names) != X_transformed.shape[1]:
+        raise ValueError("Mismatch between number of columns in transformed data and feature names.")
+    
     # Create a new DataFrame with the transformed data and column names
     X = pd.DataFrame(X_transformed, columns=all_column_names)
 

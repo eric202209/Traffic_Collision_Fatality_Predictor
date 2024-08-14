@@ -58,9 +58,6 @@ def predict():
                 features[key] = float(value)
 
         # Convert the features dictionary to a list in the correct order
-        # df = pd.DataFrame([data])
-        # df = df.reindex(columns=feature_names, fill_value=0)
-        # scaled_features = scaler.transform(df)
         features_array = [features[feature] for feature in feature_names]
         features_array = np.array(features_array).reshape(1, -1)
 
@@ -155,41 +152,63 @@ def bulk_predict():
 @app.route('/shap_summary')
 def shap_summary():
     try:
-        # Ensure shap_values is a numpy array
-        if isinstance(shap_values, list):
-            shap_values = shap_values[1]  # Assuming it's a list of two arrays, and we want the second one
-        
-        # Calculate feature importance
-        feature_importance = np.abs(shap_values).mean(0)
+        # Load or calculate SHAP values
+        shap_values = load_pickle('models/best_model_shap_values.pkl')
+                
+        if shap_values is None:
+            return jsonify({'error': 'SHAP values not found'}), 404
 
+        # Assume shap_values is a 3D array (samples, features, classes)
+        if len(shap_values.shape) == 3:
+            # Aggregate SHAP values: mean absolute value across samples
+            shap_values = np.abs(shap_values).mean(axis=0)
+        
+        # Log shapes for debugging
+        logger.info(f"SHAP values shape after aggregation: {shap_values.shape}")
+
+        # Ensure shap_values is 2D (features, classes)
+        if len(shap_values.shape) != 2:
+            raise ValueError("SHAP values are not in the expected 2D format.")
+        
+        # Calculate mean importance across classes if needed
+        feature_importance = shap_values.mean(axis=1)
+        
         # Create a DataFrame for easier plotting
         importance_df = pd.DataFrame({
             'feature': feature_names,
             'importance': feature_importance
         })
 
+        # Check DataFrame shape
+        logger.info(f"Importance DataFrame shape: {importance_df.shape}")
+        
         # Sort by importance
         importance_df = importance_df.sort_values('importance', ascending=False)
         
-        # Create the plot
-        fig = px.bar(importance_df, x='feature', y='importance', 
-                    labels={'importance': 'SHAP Value (impact on model output)'},
-                    title='Feature Importance based on SHAP Values')
+        # Create the plot data
+        plot_data = {
+            'data': [
+                {
+                    'type': 'bar',
+                    'x': importance_df['feature'].tolist(),
+                    'y': importance_df['importance'].tolist(),
+                    'name': 'Feature Importance'
+                }
+            ],
+            'layout': {
+                'title': 'Feature Importance (SHAP)',
+                'xaxis': {'title': 'Feature'},
+                'yaxis': {'title': 'Importance'},
+                'barmode': 'group'
+            }
+        }
+        logger.info(f"Plot data: {plot_data}")        
         
-        # Adjust the layout for better readability
-        fig.update_layout(
-            xaxis_title='Features',
-            yaxis_title='SHAP Value',
-            xaxis_tickangle=-45,
-            height=600
-        )
-        
-        app.logger.info(f"SHAP summary data: {json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)}")
-        return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return jsonify(plot_data)
     
     except Exception as e:
         app.logger.error(f"Error generating SHAP summary: {str(e)}")
-        return jsonify({'error': 'Failed to generate SHAP summary'}), 500
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

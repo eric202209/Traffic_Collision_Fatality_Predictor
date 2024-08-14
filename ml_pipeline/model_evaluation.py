@@ -79,6 +79,23 @@ def perform_randomized_search(model, param_distributions, X, y, cv, n_iter=50):
     random_search.fit(X, y)
     return random_search.best_estimator_
 
+def plot_shap_summary(shap_values, X_test_scaled, feature_names):
+    plt.figure(figsize=(10, 8))
+    if isinstance(shap_values, list):
+        # For classification problems
+        for i, sv in enumerate(shap_values):
+            shap.summary_plot(sv, X_test_scaled, feature_names=feature_names, show=False)
+            plt.title(f"SHAP Summary for Class {i}")
+            plt.tight_layout()
+            plt.savefig(f'static/images/shap_summary_class_{i}.png')
+            plt.close()
+    else:
+        shap.summary_plot(shap_values, X_test_scaled, feature_names=feature_names, show=False)
+        plt.tight_layout()
+        plt.savefig('static/images/shap_summary.png')
+        plt.close()
+    logger.info("SHAP summary plot saved.")
+
 def evaluate_models(X_train_scaled, X_test_scaled, y_train, y_test, logger):
     logger.info("Starting model evaluation...")
     
@@ -191,27 +208,37 @@ def evaluate_models(X_train_scaled, X_test_scaled, y_train, y_test, logger):
     except Exception as e:
         logger.error(f"Error in saving best model: {str(e)}")
 
-    logger.info("Calculating SHAP values...")
+    logger.info("Calculating or loading SHAP values...")
     try:
         # Reduce the number of background samples
-        background_data = shap.kmeans(X_train_scaled, K=100)  # Use 100 background samples
+        background_data = shap.kmeans(X_train_scaled, 100)  # Use 100 background samples
 
         # Use a subset of your test data
         X_test_subset = X_test_scaled[:100]  # Use first 100 samples, or use random sampling
+
+        # Use a subset of your test data, randomly sampled for better representation
+        np.random.seed(42)  # For reproducibility
+        X_test_subset_indices = np.random.choice(X_test_scaled.shape[0], 100, replace=False)
+        X_test_subset = X_test_scaled[X_test_subset_indices]
 
         if hasattr(best_model, 'predict_proba'):
             if hasattr(best_model, 'feature_importances_'):
                 explainer = shap.TreeExplainer(best_model, data=background_data)
             else:
-                explainer = shap.KernelExplainer(best_model.predict_proba, background_data)
+                explainer = shap.KernelExplainer(best_model.predict_proba, background_data, 
+                                                 link="logit")  # Specify link function for better performance     
             
             # Calculate SHAP values
-            shap_values = explainer.shap_values(X_test_subset)
-
+            shap_values = explainer.shap_values(X_test_subset, nsamples=100)  # Limit the number of samples for faster computation
+            
             # Save SHAP values
             with open('models/best_model_shap_values.pkl', 'wb') as f:
                 pickle.dump(shap_values, f)
             logger.info("SHAP values calculated and saved successfully.")
+
+            # Plot and save SHAP summary
+            plot_shap_summary(shap_values, X_test_subset)
+
     except Exception as e:
         logger.error(f"Error in calculating SHAP values: {str(e)}")
     

@@ -447,15 +447,26 @@
 
         function loadShapSummary() {
             fetch('/shap_summary')
-                .then(response => response.json())
-                .then(data => {
-                    console.log("SHAP data received:", data);  // Log the received data
-                    Plotly.newPlot('shap-plot', data);
-                })
-                .catch(error => {
-                    console.error("Error loading SHAP summary:", error);
-                    document.getElementById('shap-plot').innerHTML = 'Error loading SHAP summary';
-                });
+            .then(response => response.json())
+            .then(data => {
+                console.log("SHAP data received:", data);  // Log the received data
+
+                // Check if the data contains 'data' and 'layout'
+                if (data.data && data.layout) {
+                    try {
+                        Plotly.newPlot('shap-plot', data.data, data.layout);
+                    } catch (error) {
+                        console.error("Error plotting SHAP summary:", error);
+                        document.getElementById('shap-plot').innerHTML = 'Error rendering SHAP summary';
+                    }
+                } else {
+                    document.getElementById('shap-plot').innerHTML = 'Invalid SHAP data format';
+                }
+            })
+            .catch(error => {
+                console.error("Error loading SHAP summary:", error);
+                document.getElementById('shap-plot').innerHTML = 'Error loading SHAP summary';
+            });
         }
 
         // Call these functions when the page loads
