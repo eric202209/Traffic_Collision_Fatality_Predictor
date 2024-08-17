@@ -3,11 +3,11 @@
 Steps
 
 1. Git clone from github
-2. Run "pip install -r requirements.txt"
-3. Setup your vitual environment. See https://code.visualstudio.com/docs/python/environments
+2. Setup your vitual environment. See https://code.visualstudio.com/docs/python/environments
+3. Run "pip install -r requirements.txt"
 4. Run "python run.py"
 5. Click on http://127.0.0.1:5000 or http://localhost:5000
-6. If it still loss some dependencies(ex: plotly, xgboost, pickle, imblearn), please install them at terminal after you activate .venv
+6. If it still loss some dependencies, please install them at terminal after you activate .venv
 7. Bluk Prediction format:
    [
    {
